@@ -8,5 +8,5 @@ The current book based on Havana/Icehouse and is available at Amazon at http://w
 
 I am working on a second edition geared towards Juno/Kilo that may be ready later this year.
 
-If you run into issues with the process documented within, please let me know and I'll see what I can do. As always, feel free to follow the deployment guides at docs.openstack.org, as they should be relatively up-to-date.
+If you run into issues with the process documented within, please let me know and I'll see what I can do. As always, feel free to follow the deployment guides at http://docs.openstack.org, as they should be relatively up-to-date.
 
