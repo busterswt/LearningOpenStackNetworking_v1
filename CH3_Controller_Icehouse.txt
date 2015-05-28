@@ -1,5 +1,8 @@
-# chapter3.controller
-# 20150525
+# Title: CH3_Controller_Icehouse.txt
+# Purpose: 
+# Modified installation for Icehouse on CentOS 6.6. 
+# It is meant to replace the documented installation process in Chapter 3 for controller nodes only.
+# NOTE: Do not run commands that are commented out. 
 
 yum -y install openstack-neutron
 
