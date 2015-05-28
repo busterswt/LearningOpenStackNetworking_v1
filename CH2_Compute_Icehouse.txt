@@ -1,0 +1,77 @@
+# Title: CH2_Compute_Icehouse.txt
+# Purpose: 
+# Modified installation for Icehouse on CentOS 6.6. 
+# It is meant to replace the documented installation process in Chapter 2 for compute nodes only.
+# NOTE: Do not run commands that are commented out. 
+
+# Configure the repos
+rpm -ivh https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
+rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+
+# Install crudini
+yum -y install crudini openstack-utils
+
+# Set the hostname
+sed -i "/HOSTNAME/c\HOSTNAME=compute01.learningneutron.com" /etc/sysconfig/network
+
+# Add DNS entries
+echo 10.254.254.100 controller.learningneutron.com controller >> /etc/hosts
+echo 10.254.254.101 compute01.learningneutron.com compute01 >> /etc/hosts
+
+# Disable SELinux
+sed -i "/SELINUX=enforcing/c\SELINUX=disabled" /etc/selinux/config
+
+# Remove iptables
+iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
+iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+service iptables save
+
+# Install NTP
+yum -y install ntp
+service ntpd start
+chkconfig ntpd on
+
+# Upgrade and reboot
+yum -y upgrade
+reboot
+
+# Install MySQL client
+yum -y install mysql MySQL-python
+
+# Install Nova COMPUTE Services
+yum -y install openstack-nova-compute
+crudini --set /etc/nova/nova.conf database connection mysql://nova:nova@controller/nova
+crudini --set /etc/nova/nova.conf DEFAULT auth_strategy keystone
+crudini --set /etc/nova/nova.conf keystone_authtoken auth_host controller
+crudini --set /etc/nova/nova.conf keystone_authtoken auth_protocol http
+crudini --set /etc/nova/nova.conf keystone_authtoken auth_port 35357
+crudini --set /etc/nova/nova.conf keystone_authtoken admin_user nova
+crudini --set /etc/nova/nova.conf keystone_authtoken admin_tenant_name service
+crudini --set /etc/nova/nova.conf keystone_authtoken admin_password nova
+crudini --set /etc/nova/nova.conf DEFAULT rpc_backend nova.openstack.common.rpc.impl_qpid
+crudini --set /etc/nova/nova.conf DEFAULT qpid_hostname controller
+crudini --set /etc/nova/nova.conf DEFAULT my_ip 10.254.254.101
+crudini --set /etc/nova/nova.conf DEFAULT vnc_enabled True
+crudini --set /etc/nova/nova.conf DEFAULT vncserver_listen 0.0.0.0
+crudini --set /etc/nova/nova.conf DEFAULT vncserver_proxyclient_address 10.254.254.101
+crudini --set /etc/nova/nova.conf DEFAULT novncproxy_base_url http://controller:6080/vnc_auto.html
+crudini --set /etc/nova/nova.conf DEFAULT glance_host controller
+crudini --set /etc/nova/api-paste.ini filter:authtoken auth_host controller
+crudini --set /etc/nova/api-paste.ini filter:authtoken auth_port 35357
+crudini --set /etc/nova/api-paste.ini filter:authtoken auth_protocol http
+crudini --set /etc/nova/api-paste.ini filter:authtoken admin_tenant_name service
+crudini --set /etc/nova/api-paste.ini filter:authtoken admin_user nova
+crudini --set /etc/nova/api-paste.ini filter:authtoken admin_password nova
+crudini --set /etc/nova/nova.conf DEFAULT api_paste_config /etc/nova/api-paste.ini
+
+# Fixes a bug introduced in Icehouse
+crudini --set /etc/nova/nova.conf DEFAULT vif_plugging_is_fatal false
+crudini --set /etc/nova/nova.conf DEFAULT vif_plugging_timeout 0
+
+service libvirtd start
+service messagebus start
+service openstack-nova-compute start
+chkconfig libvirtd on
+chkconfig messagebus on
+chkconfig openstack-nova-compute on
+
