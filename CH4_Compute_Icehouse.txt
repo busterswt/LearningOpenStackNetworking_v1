@@ -1,0 +1,19 @@
+# Title: CH4_Compute_Icehouse.txt
+# Purpose: 
+# Modified installation for Icehouse on CentOS 6.6. 
+# It is meant to replace the documented installation process in Chapter 4 for compute nodes only.
+# NOTE: Do not run commands that are commented out. 
+
+crudini --set /etc/nova/nova.conf DEFAULT linuxnet_interface_driver linuxnet_interface_driver=nova.network.linux_net.LinuxBridgeInterfaceDriver
+crudini --set /etc/nova/nova.conf DEFAULT libvirt_vif_driver nova.virt.libvirt.vif.NeutronLinuxBridgeVIFDriver
+
+crudini --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini vlans tenant_network_type vlan
+crudini --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini linux_bridge physical_interface_mappings physnet1:eth1
+
+crudini --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini vlans network_vlan_ranges physnet1:30:33
+crudini --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+
+service neutron-linuxbridge-agent start
+chkconfig neutron-linuxbridge-agent on
+
+service openstack-nova-compute restart
