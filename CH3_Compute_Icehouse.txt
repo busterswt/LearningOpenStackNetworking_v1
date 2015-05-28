@@ -1,0 +1,70 @@
+# Title: CH3_Compute_Icehouse.txt
+# Purpose: 
+# Modified installation for Icehouse on CentOS 6.6. 
+# It is meant to replace the documented installation process in Chapter 3 for compute nodes only.
+# NOTE: Do not run commands that are commented out. 
+
+yum -y install openstack-neutron
+
+crudini --set /etc/neutron/neutron.conf database connection mysql://neutron:neutron@controller/neutron
+
+sed -i "/net.ipv4.ip_forward/c\net.ipv4.ip_forward = 1" /etc/sysctl.conf
+sed -i "/net.ipv4.conf.default.rp_filter/c\net.ipv4.conf.default.rp_filter = 0" /etc/sysctl.conf
+sed -i -e "\$anet.ipv4.conf.all.rp_filter = 0" /etc/sysctl.conf
+sysctl -p
+
+crudini --set /etc/neutron/neutron.conf DEFAULT auth_strategy keystone
+crudini --set /etc/neutron/neutron.conf DEFAULT api_paste_config /etc/neutron/api-paste.ini
+crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_host controller
+crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_port 35357
+crudini --set /etc/neutron/neutron.conf keystone_authtoken auth_protocol http
+crudini --set /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name service
+crudini --set /etc/neutron/neutron.conf keystone_authtoken admin_user neutron
+crudini --set /etc/neutron/neutron.conf keystone_authtoken admin_password neutron
+
+#crudini --set /etc/neutron/api-paste.ini filter:authtoken auth_host controller
+#crudini --set /etc/neutron/api-paste.ini filter:authtoken auth_uri http://controller:5000
+#crudini --set /etc/neutron/api-paste.ini filter:authtoken admin_tenant_name service
+#crudini --set /etc/neutron/api-paste.ini filter:authtoken admin_user neutron
+#crudini --set /etc/neutron/api-paste.ini filter:authtoken admin_password neutron
+
+crudini --set /etc/neutron/neutron.conf DEFAULT rpc_backend neutron.openstack.common.rpc.impl_qpid
+crudini --set /etc/neutron/neutron.conf DEFAULT qpid_hostname controller
+crudini --set /etc/neutron/neutron.conf DEFAULT qpid_port 5672
+crudini --set /etc/neutron/neutron.conf DEFAULT qpid_username guest
+crudini --set /etc/neutron/neutron.conf DEFAULT qpid_password guest
+
+crudini --set /etc/nova/nova.conf DEFAULT network_api_class nova.network.neutronv2.api.API
+crudini --set /etc/nova/nova.conf DEFAULT neutron_url http://controller:9696
+crudini --set /etc/nova/nova.conf DEFAULT neutron_auth_strategy keystone
+crudini --set /etc/nova/nova.conf DEFAULT neutron_admin_tenant_name service
+crudini --set /etc/nova/nova.conf DEFAULT neutron_admin_username neutron
+crudini --set /etc/nova/nova.conf DEFAULT neutron_admin_password neutron
+crudini --set /etc/nova/nova.conf DEFAULT neutron_admin_auth_url http://controller:35357/v2.0
+
+crudini --set /etc/nova/nova.conf DEFAULT firewall_driver nova.virt.firewall.NoopFirewallDriver
+crudini --set /etc/nova/nova.conf DEFAULT security_group_api neutron
+
+yum -y install openstack-neutron-linuxbridge
+yum -y install openstack-neutron-openvswitch
+
+######
+# ML2
+######
+
+yum install openstack-neutron-ml2
+
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers local,flat,vlan
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vlan
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers linuxbridge
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks physnet1
+crudini --set /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vlan network_vlan_ranges physnet1:30:33
+
+crudini --set /etc/neutron/neutron.conf DEFAULT core_plugin neutron.plugins.ml2.plugin.Ml2Plugin
+ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+
+######
+# End ML2
+######
+
+
