@@ -10,6 +10,6 @@ I am working on a second edition geared towards Juno/Kilo that may be ready late
 
 If you run into issues with the process documented within, please let me know and I'll see what I can do. As always, feel free to follow the deployment guides at http://docs.openstack.org, as they should be relatively up-to-date.
 
-***UPDATE***
+***UPDATE*** September 26, 2015
 
 A reader recently pointed out that the Icehouse repository is no longer available. With the approaching Liberty release this is to be expected. I will do my best to update the master branch to support Juno, Kilo, and beyond. Please check out those branches for further updates.
